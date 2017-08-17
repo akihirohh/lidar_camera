@@ -21,7 +21,7 @@ const std::string currentTime(){
 	struct tm	tstruct;
 	char		buf[80];
 	tstruct = *localtime(&now);
-	strftime(buf,sizeof(buf), "%Y%m%d|%H%M%S|", &tstruct);
+	strftime(buf,sizeof(buf), "%Y%m%d_%H%M%S_", &tstruct);
 	return buf;
 }
 int millis(timeval t_start)
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
   std::string timestamp;
   struct timeval t_start;
 
-	cv::VideoCapture cap(1);
+	cv::VideoCapture cap(0);
 	cv::Mat frame;
 	if(!cap.isOpened())  // check if we succeeded
 	{
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
   std::string folder_name = "Data/" + currentDateTime(), cmd_mkdir = "mkdir " + folder_name;
 
   popen(cmd_mkdir.c_str(),"r");
-  lidar_filename = "lidar_ts.txt";
+  lidar_filename = currentDateTime()+"_lidar_ts.txt";
   lidar_file.open(lidar_filename.c_str(), std::ios_base::out);
   if(!lidar_file.is_open())
   {
@@ -109,6 +109,6 @@ int main(int argc, char *argv[])
     }
   }
   lidar_file.close();
-  popen(("mv lidar_ts.txt " + folder_name).c_str(), "r" );
+  popen(("mv " +lidar_filename + " "+ folder_name).c_str(), "w" );
   std::cout << std::endl << lidar_filename << std::endl; 
 }
