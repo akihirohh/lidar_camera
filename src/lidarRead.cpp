@@ -26,25 +26,24 @@ namespace lidarRead
 			urg.set_scanning_parameter(urg.deg2step(-135), urg.deg2step(+135), 0);
 	#endif
 			enum { Capture_times = 1 };
-			urg.start_measurement(Urg_driver::Distance, Urg_driver::Infinity_times, 0);
+			//urg.start_measurement(Urg_driver::Distance, Urg_driver::Infinity_times, 0);
+			urg.start_measurement(Urg_driver::Distance_intensity, Urg_driver::Infinity_times, 0);
 	}
 
-	std::vector <long> getLidar(Urg_driver& urg)
+	void getLidar(Urg_driver& urg, std::vector<long> &data_distance, std::vector<unsigned short> &data_intensity)
 	{
-			long time_stamp = 0;
-			std::vector<long> data;
-			int success = 0;
-			success = urg.get_distance(data, &time_stamp);
-			if(!success)
-			{
-					std::cout << "Urg_driver::get_distance(): " << urg.what() << std::endl;
-					data.push_back(-1);
-			}     
-			else
-			{
-					data.push_back(time_stamp);
-			}
-			return data;
+		long time_stamp = 0;
+		int success = 0;
+		success = urg.get_distance_intensity(data_distance, data_intensity, &time_stamp);
+		if(!success)
+		{
+				std::cout << "Urg_driver::get_distance(): " << urg.what() << std::endl;
+				data_distance.push_back(-1);
+		}     
+		else
+		{
+				data_distance.push_back(time_stamp);
+		}
 	}
 	void *lidarReading( void *ptr )
 	{
@@ -52,26 +51,28 @@ namespace lidarRead
 		thdata *data;
 		data = (thdata *) ptr;
 		int b_loop = 1;	
-		std::vector<long> readings;
+		std::vector<long> distance;
+		std::vector<unsigned short> data_intensity;
 
 		data->mtx.lock();
 		char const *arr0[] = { "lidar", "-s", data->portname.c_str() };	
 		initLidar(3, arr0, urg0);
-		data->d = getLidar(urg0);
+		getLidar(urg0, data->distance, data->intensity);
 		data->b_loop = 1;
+		data->distance.pop_back();
 		data->mtx.unlock();
 
 		while(b_loop)
 		{
 			try
 			{
-				readings = getLidar(urg0); 				
-				if (readings.back()==-1)
+				getLidar(urg0, distance, data_intensity);				
+				if (distance.back()==-1)
 				{
 					std::cout << "ERROR";
 					closeLidar(urg0);
 					initLidar(3,arr0,urg0);
-					readings = getLidar(urg0);
+					getLidar(urg0, distance, data_intensity);	
 				}  
 			}
 			catch (...)
@@ -83,8 +84,9 @@ namespace lidarRead
 				}      
 			}  				
 			data->mtx.lock();
-			std::copy(readings.begin(), readings.end()-1, data->d.begin());
-			data->timestamp = readings.back();	
+			std::copy(distance.begin(), distance.end()-1, data->distance.begin());
+			std::copy(data_intensity.begin(), data_intensity.end()-1, data->intensity.begin());
+			data->timestamp = distance.back();	
 			if(b_loop) b_loop = data->b_loop;
 			else data->b_loop = b_loop;
 			data->mtx.unlock();

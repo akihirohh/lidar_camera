@@ -18,17 +18,18 @@ namespace lidarRead
 	typedef struct str_thrdata
 	{
 		int b_loop;
-		std::vector<long> d;	//vector of read distances
+		std::vector<long> distance;	//vector of read distances
+		std::vector<unsigned short> intensity;
 		int timestamp;
 		std::string portname;
 		std::mutex mtx;
 	} thdata;
 	
-	void 								closeLidar(Urg_driver& urg);
-	std::vector<long> 	getLidar(Urg_driver& urg);  
-	int	       					initLidar(int argc, const char **argv, Urg_driver& urg);
-	bool 								isLidarOpen(Urg_driver& urg);
-	void 								*lidarReading(void *ptr); 
+	void 	closeLidar(Urg_driver& urg);
+	void	getLidar(Urg_driver& urg, std::vector<long> &data_distance, std::vector<unsigned short> &data_intensity);
+	int	    initLidar(int argc, const char **argv, Urg_driver& urg);
+	bool 	isLidarOpen(Urg_driver& urg);
+	void 	*lidarReading(void *ptr); 
 }
 
 #endif
